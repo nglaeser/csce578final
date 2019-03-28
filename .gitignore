@@ -1,9 +1,19 @@
+# generated files
 __pycache__
 *.pyc
 *.json
+*.swp
+.ipynb_checkpoints
+
+# file containing group info
 groupme-fetch/mygroups
+
+# lots of (seemingly) unnecessary packages
 groupme-fetch/requests
+
+# old code
+groupme-fetch/old
+
+# generated transcripts
 temp-transcript-*.json
 transcript-*.json
-groupme-fetch/old
-.ipynb_checkpoints
