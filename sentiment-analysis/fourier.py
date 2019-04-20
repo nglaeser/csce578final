@@ -4,7 +4,7 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from textblob import TextBlob
 from matplotlib import pyplot as plt
 ### using some import code for GroupMe by Noemi ###
-import json
+import json, os
 from pprint import pprint
 from datetime import datetime, timezone, timedelta
 import math
@@ -12,54 +12,45 @@ from collections import defaultdict
 import numpy as np
 from math import sqrt
 
-# create stopwords set
-stopwords = set(line.strip() for line in open('stopwords.txt'))
-stopwords.update(['www', 'http', 'https', 'com'])
+try:
+    project_dir = os.environ['PROJECT_PATH']
+except:
+    print("Please make sure you have set your PROJECT_PATH variable as described in the readme.")
+    exit(0)
 
-# open transcript
-with open('transcript-15528094.json') as f:
-    data = json.load(f)
+try:
+    stopword_file = os.path.join(project_dir, 'utilities/stopwords.txt')
+    stopwords = set(line.strip() for line in open(stopword_file))
+    stopwords.update(['www', 'http', 'https', 'com'])
+except:
+    print("Stopword file " + str(stopword_file) + "not found")
+    exit(0)
 
-# create fake names for each person
-fake_name = defaultdict(str)
-fake_name = {'10820250': 'Jack',
-             '13207027': 'John',
-             '14137183': 'Peter',
-             '18559389': 'Anna',
-             '18559680': 'Ethan',
-             '19458971': 'Alex',
-             '20963086': 'Kylie',
-             '21235741': 'Jim',
-             '21235813': 'Nathan',
-             '21241679': 'Aaron',
-             '21349729': 'Sarah',
-             '21755924': 'Bob',
-             '22207515': 'Claire',
-             '22276941': 'Sally',
-             '23354087': 'Mike',
-             '24927292': 'Tim',
-             '26498711': 'Nina',
-             '26508082': 'Jacob',
-             '26514517': 'Lisa',
-             '26601370': 'Mitch',
-             '270093': 'Alan',
-             '270280': 'Tom',
-             '27380802': 'Jill',
-             '27546073': 'Walter',
-             '28068527': 'Simon',
-             '28222063': 'Annie',
-             '28880161': 'Chris',
-             '29652195': 'Nancy',
-             '29666163': 'Michael',
-             '29747722': 'Jason',
-             '29750591': 'Trey',
-             '29775461': 'Nicole',
-             '29775466': 'Liza',
-             '29818898': 'Thomas',
-             '29846726': 'Isaac',
-             '45033570': 'Patrick',
-             '46185459': 'Zo',
-             '51427894': 'Natalie'}
+transcript_filename = input("Enter the name of your transcript file: ")
+try:
+    transcript_filepath = os.path.join(project_dir, transcript_filename)
+    with open(transcript_filepath) as f:
+        data = json.load(f)
+except:
+    print("Could not open the file " + str(transcript_filename) + " in " + os.path.split(transcript_filepath)[:-1][0])
+    exit(0)
+
+fakename = defaultdict(str)
+
+fakename_file = os.path.join(project_dir, 'utilities/fakenames.txt')
+try:
+    f = open(fakename_file, 'r')
+except:
+    print("Could not find fakenames.txt in the utilities directory of your project path.")
+    exit(0)
+
+try:
+    for line in f:
+        tokens = line.split()
+        fakename[tokens[0]] = tokens[1]
+except:
+    print("The file utilities/fakenames.txt is improperly formatted.")
+    exit(0)
  
 # last UTC message day time in UTC Epoch = 1555214400
 last_day = 1555214400
@@ -100,7 +91,7 @@ def sentiment_for_day(day):
    			
    			sentences.append(item['text'])
    			message_counter+=1
-   			#print("%s: %s" % (fake_name[item['user_id']], item['text']))
+   			#print("%s: %s" % (fakename[item['user_id']], item['text']))
 
 	# Run NLTK VADER
 	# get polarity scores for each message
