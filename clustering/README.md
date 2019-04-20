@@ -1,3 +1,9 @@
+## Usage
+
+```
+python Glaeser_assignment02.py
+```
+
 ## Improvements to be made
 
 * Dealing with 
