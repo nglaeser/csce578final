@@ -6,14 +6,15 @@ __pycache__
 .ipynb_checkpoints
 
 # file containing group info
-groupme-fetch/mygroups
+utilities/mygroups
 
 # lots of (seemingly) unnecessary packages
-groupme-fetch/requests
+utilities/requests
 
 # old code
-groupme-fetch/old
+utilities/old
 
-# generated transcripts
+# generated transcripts/files
 temp-transcript-*.json
 transcript-*.json
+sentence-complexity/sentences
