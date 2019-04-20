@@ -9,9 +9,17 @@
 
 ## Setup and Dependencies
 
-This project utilizes Python 3.7 (except for the scripts in the utilities folder, which use 2.7).  
+* Python 3.7 (except for the scripts in the utilities folder, which use 2.7).  
+* The Sentence Complexity part uses the Stanford Parser, which you can download as follows:
+```
+cd ~/Downloads
+wget http://nlp.stanford.edu/software/stanford-parser-full-2018-10-17.zip
+unzip stanford-parser-full-2018-10-17.zip
+wget https://nlp.stanford.edu/software/stanford-corenlp-full-2018-10-05.zip
+unzip stanford-corenlp-full-2018-10-05.zip
+```
 
-In several files, I also use environment variables to get the path to transcript files, etc. Set up your path by typing the following into your command prompt:
+Finally, set the path by typing the following into your command prompt:
 ```
 export PROJECT_PATH="[path to this repo]"
 ```
@@ -23,15 +31,15 @@ export PROJECT_PATH="[path to this repo]"
 * README
 * `groupme-fetch.py`: script for getting GroupMe transcripts
 * `newest-id.py`: used by `groupme-fetch.py`
-* `simple-transcript.py`: prints a human-readable version of a given transcript; same functionality can be found in `clustering/Glaeser\_assignment02.py`
-* `stopwords.txt`: standard list of stopwords (provided by Duncan Buell)
+* `simple-transcript.py`: prints a human-readable version of a given transcript; same functionality can be found in `clustering/Glaeser_assignment02.py`
+* `stopwords.txt`: standard list of stopwords (provided by Dr. Duncan Buell)
 
 ## Clustering
 
 *Python 3.7*
 
 * [Write-up explaining original code](https://www.overleaf.com/read/cwzdnysgycvf)
-* Python and iPython versions of code
+* Python code
 
 ## Sentence Complexity
 
