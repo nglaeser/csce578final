@@ -39,7 +39,7 @@ export PROJECT_PATH="[path to this repo]"
 *Python 3.7*
 
 * [Write-up explaining original code](https://www.overleaf.com/read/zczwcrsfwjqk)
-* `Glaeser_assignment03.ipynb`: full code
+* `Glaeser_assignment03.ipynb` and `Glaeser_assignment03.py`: full code
 
 There are also files containing submodules of the full code:  
 * `read_sentences.ipynb`
