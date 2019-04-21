@@ -7,17 +7,10 @@
 * [Project Proposal](https://www.overleaf.com/read/nmbpfkzvzjgj); also [in this repo](Glaeser,Quan_Proposal.pdf)
 * [Project Write-up](https://www.overleaf.com/read/nmbpfkzvzjgj)
 
-## Setup and Dependencies
+## Overall Setup and Dependencies
 
 * Python 3.7 (except for the scripts in the utilities folder, which use 2.7).  
-* The Sentence Complexity part uses the Stanford Parser, which you can download as follows:
-```
-cd ~/Downloads
-wget http://nlp.stanford.edu/software/stanford-parser-full-2018-10-17.zip
-unzip stanford-parser-full-2018-10-17.zip
-wget https://nlp.stanford.edu/software/stanford-corenlp-full-2018-10-05.zip
-unzip stanford-corenlp-full-2018-10-05.zip
-```
+* Make sure your transcript is up-to-date (see [utilities/README.md](utilities/README.md))
 
 Finally, set the path by typing the following into your command prompt:
 ```
