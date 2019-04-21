@@ -1,85 +1,57 @@
 #Copyright (c) 2019 Nicolas Quan
 
 import os
-import re
 from collections import defaultdict
-from operator import itemgetter
 from gensim import corpora, matutils
 from gensim.models import LsiModel, TfidfModel
 from nltk.tokenize import RegexpTokenizer
 from gensim.models.coherencemodel import CoherenceModel
 from sklearn.cluster import KMeans
+import json
+from datetime import datetime, timezone, timedelta
 
 # list of punc to exclude from analysis
 end_punc = ['.', '!','?']
 
-# create stopwords set
-stopwords_set = set()
-with open('stopwords.txt') as f:
-  lines = []
-  for line in f:
-  	line = line.rstrip()
-  	if line != '':
-  		lines.append(line)
-  stopwords_set.update(lines)
+try:
+    project_dir = os.environ['PROJECT_PATH']
+except:
+    print("Please make sure you have set your PROJECT_PATH variable as described in the readme.")
+    exit(0)
 
-### using some import code for GroupMe by Noemi ###
-import json
-from pprint import pprint
-from datetime import datetime, timezone, timedelta
-import math
-from collections import defaultdict
-import numpy as np
-from math import sqrt
+try:
+    stopword_file = os.path.join(project_dir, 'utilities/stopwords.txt')
+    stopwords = set(line.strip() for line in open(stopword_file))
+    stopwords.update(['www', 'http', 'https', 'com'])
+except:
+    print("Stopword file " + str(stopword_file) + "not found")
+    exit(0)
 
-# create stopwords set
-stopwords = set(line.strip() for line in open('stopwords.txt'))
-stopwords.update(['www', 'http', 'https', 'com'])
+transcript_filename = input("Enter the name of your transcript file: ")
+try:
+    transcript_filepath = os.path.join(project_dir, transcript_filename)
+    with open(transcript_filepath) as f:
+        data = json.load(f)
+except:
+    print("Could not open the file " + str(transcript_filename) + " in " + os.path.split(transcript_filepath)[:-1][0])
+    exit(0)
 
-# open transcript
-with open(os.pardir+'/transcript-15528094.json') as f:
-    data = json.load(f)
+fakename = defaultdict(str)
 
-# create fake names for each person
-fake_name = defaultdict(str)
-fake_name = {'10820250': 'Jack',
-             '13207027': 'John',
-             '14137183': 'Peter',
-             '18559389': 'Anna',
-             '18559680': 'Ethan',
-             '19458971': 'Alex',
-             '20963086': 'Kylie',
-             '21235741': 'Jim',
-             '21235813': 'Nathan',
-             '21241679': 'Aaron',
-             '21349729': 'Sarah',
-             '21755924': 'Bob',
-             '22207515': 'Claire',
-             '22276941': 'Sally',
-             '23354087': 'Mike',
-             '24927292': 'Tim',
-             '26498711': 'Nina',
-             '26508082': 'Jacob',
-             '26514517': 'Lisa',
-             '26601370': 'Mitch',
-             '270093': 'Alan',
-             '270280': 'Tom',
-             '27380802': 'Jill',
-             '27546073': 'Walter',
-             '28068527': 'Simon',
-             '28222063': 'Annie',
-             '28880161': 'Chris',
-             '29652195': 'Nancy',
-             '29666163': 'Michael',
-             '29747722': 'Jason',
-             '29750591': 'Trey',
-             '29775461': 'Nicole',
-             '29775466': 'Liza',
-             '29818898': 'Thomas',
-             '29846726': 'Isaac',
-             '45033570': 'Patrick',
-             '46185459': 'Zo',
-             '51427894': 'Natalie'}
+fakename_file = os.path.join(project_dir, 'utilities/fakenames.txt')
+try:
+    f = open(fakename_file, 'r')
+except:
+    print("Could not find fakenames.txt in the utilities directory of your project path.")
+    exit(0)
+
+try:
+    for line in f:
+        tokens = line.split()
+        fakename[tokens[0]] = tokens[1]
+except:
+    print("The file utilities/fakenames.txt is improperly formatted.")
+    exit(0)
  
 # last UTC message day time in UTC Epoch = 1555214400
 last_day = 1555214400
@@ -120,7 +92,7 @@ def get_data(day):
    			
    			sentences.append(str(item['text']))
    			message_counter+=1
-   			#print("%s: %s" % (fake_name[item['user_id']], item['text']))	
+   			#print("%s: %s" % (fakename[item['user_id']], item['text']))	
 	sentences = ''.join(sentences)
 	return sentences
 	
@@ -130,7 +102,7 @@ def preprocess(docs):
 	tokenizer = RegexpTokenizer(r'\w+')
 	for doc in docs:
 		tokens = tokenizer.tokenize(doc)
-		pre_final_tokens = [token for token in tokens if not token in stopwords_set]
+		pre_final_tokens = [token for token in tokens if not token in stopwords]
 		final_tokens = [token for token in pre_final_tokens if token[0].isupper()]
 		tokenized_docs.append(final_tokens)
 	return tokenized_docs
@@ -138,26 +110,26 @@ def preprocess(docs):
 # method to create corpus to be used for lsi
 def create_corpus(final_docs):
 	# create term dictionary
-	dict = corpora.Dictionary(final_docs)
+	dictionary = corpora.Dictionary(final_docs)
 	# create doc-term matrix using term dictionary
 	doc_term_matrix = []
 	for doc in final_docs:
-		doc_term_matrix.append(dict.doc2bow(doc))
+		doc_term_matrix.append(dictionary.doc2bow(doc))
 	# convert doc_term matrix to tfidf
 	tfidf = TfidfModel(doc_term_matrix)
 	tfidf_doc_term_matrix = tfidf[doc_term_matrix]
-	return dict, tfidf_doc_term_matrix
+	return dictionary, tfidf_doc_term_matrix
 
 # method to create lsi models and find most coherent number of topics
-def get_coherence_values(dict, doc_term_matrix, final_docs, stop, start, step):
+def get_coherence_values(dictionary, doc_term_matrix, final_docs, stop, start, step):
 	lsi_models = []
 	coherence_values = []
 	for num_topics in range(start, stop, step):
 		# create lsi models
-		lsi_model = LsiModel(doc_term_matrix, num_topics=num_topics, id2word=dict)
+		lsi_model = LsiModel(doc_term_matrix, num_topics=num_topics, id2word=dictionary)
 		lsi_models.append(lsi_model)
 		# get coherence values for each model
-		coherence_model = CoherenceModel(model=lsi_model, texts=final_docs, dictionary=dict, coherence='c_v')
+		coherence_model = CoherenceModel(model=lsi_model, texts=final_docs, dictionary=dictionary, coherence='c_v')
 		coherence_values.append(coherence_model.get_coherence())
 	print("Coherence values", coherence_values)
 	return lsi_models, coherence_values
@@ -181,8 +153,8 @@ while start_date <= stop_date:
 
 final_docs = preprocess(raw_docs)
 print(final_docs)
-dict, doc_term_matrix = create_corpus(final_docs)
-lsi_models, coherence_values = get_coherence_values(dict, doc_term_matrix, final_docs, 10, 1, 2)
+dictionary, doc_term_matrix = create_corpus(final_docs)
+lsi_models, coherence_values = get_coherence_values(dictionary, doc_term_matrix, final_docs, 10, 1, 2)
 counter = 1
 for model in lsi_models:
 	print('model: ', counter)
