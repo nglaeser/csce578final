@@ -1,3 +1,15 @@
+## Dependencies 
+
+* Python 3.7
+* Stanford Parser, which you can download as follows:
+```
+cd ~/Downloads
+wget https://nlp.stanford.edu/software/stanford-parser-full-2018-10-17.zip
+unzip stanford-parser-full-2018-10-17.zip
+wget https://nlp.stanford.edu/software/stanford-corenlp-full-2018-10-05.zip
+unzip stanford-corenlp-full-2018-10-05.zip
+```
+
 ## Usage
 
 ```
