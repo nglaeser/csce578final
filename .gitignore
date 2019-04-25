@@ -4,6 +4,7 @@ __pycache__
 *.json
 *.swp
 .ipynb_checkpoints
+.DS_STORE
 
 # file containing group info
 utilities/mygroups
@@ -18,3 +19,6 @@ utilities/old
 temp-transcript-*.json
 transcript-*.json
 sentence-complexity/sentences
+
+# images
+*.png
