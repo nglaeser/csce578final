@@ -6,13 +6,18 @@ import json
 from pprint import pprint
 from datetime import datetime
 import math
+import string
 
 from collections import defaultdict
 import numpy as np
+import matplotlib.pyplot as plt
 
 punctlist = ['.', '!', '?', ',', ';', ':', '"', "'", '(', ')', '--', '-', '...', '/', '\'', '@',
             '&', '>', '<', '=', '’', '^', '…', '_']
 # split on punctuation and get rid of it
+
+# set of ASCII characters only (to remove emojis, below)
+printable = set(string.printable)
 
 ########### USEFUL FUNCTIONS ########################
 def dot(arr1, arr2):
@@ -41,7 +46,7 @@ except:
 try:
     stopword_file = os.path.join(project_dir, 'utilities/stopwords.txt')
     stopwords = set(line.strip() for line in open(stopword_file))
-    stopwords.update(['www', 'http', 'https', 'com'])
+    stopwords.update(['www', 'http', 'https', 'com', 'lol', 'yeah', 'like', 'm', 'also', 'okay', 'll', 'xd', 've', 'd'])
 except:
     print("Stopword file " + str(stopword_file) + "not found")
     exit(0)
@@ -58,6 +63,24 @@ except:
 id_to_name = defaultdict(str)
 doc_wordcounts = defaultdict(lambda: defaultdict(int)) # each document has a dict of word counts
 
+#### get fake names for the IDs ##########
+fakename = defaultdict(str)
+
+fakename_file = os.path.join(project_dir, 'utilities/fakenames.txt')
+try:
+    f = open(fakename_file, 'r')
+except:
+    print("Could not find fakenames.txt in the utilities directory of your project path.")
+    exit(0)
+
+try:
+    for line in f:
+        tokens = line.split()
+        fakename[tokens[0]] = tokens[1]
+except:
+    print("The file utilities/fakenames.txt is improperly formatted.")
+    exit(0)
+########################################
 
 for item in data:
     if item['text'] != None: 
@@ -76,9 +99,40 @@ for item in data:
         
         # take out stopwords
         for w in words:
+            # remove emojis and other weird characters
+            w = ''.join(filter(lambda x: x in printable, w))
+            # now if the string is empty, don't consider it
+            if len(w) == 0:
+                continue
+
             if w in stopwords:
                 # skip
                 continue
+
+            # replace any names with the fake alias instead
+            for idnum, name in id_to_name.items():
+                split_name = name.split()
+                for i in range(len(split_name)):
+                    curr_name = split_name[i].lower()
+                    if w == curr_name:
+                        if w == '2': #special case
+                            continue
+
+                        # w contains the first name
+                        if i == 0:
+                            # replace with fake first name
+                            #print("word before: " + str(w))
+                            w = fakename[idnum].lower()
+                            #print("replace with " + str(fakename[idnum]))
+                            #w.replace(curr_name, fakename[idnum]) # replace function isn't working
+                            #print("word after: " + str(w))
+
+                        # w contains the last name
+                        else:
+                            # replace with [first name]'s last name
+                            w = "[" + str(fakename[idnum].lower()) + "\'s last name]"
+                            #w.replace(curr_name, str(fakename[idnum]) + "\'s last name")
+
             # add the words to the doc's word counts
             doc_wordcounts[user_id][w] += 1
         
@@ -117,12 +171,17 @@ for doc in doc_wordcounts:
     for term in doc_wordcounts[doc]:
         tf_idfs[doc][term] = doc_wordcounts[doc][term] * idfs_t[term]
 
+
 # now, in each document, sort terms by tf-idf
 # put top 10 into dict of vectors
 vectors = defaultdict(list)
 
 top_tfidf_words = set()
+print("\n***** top 10 tfidfs by user *****")
 for doc in tf_idfs:
+
+    print("\n" + str(id_to_name[doc]))
+    print("---------------------")
 
     # top ten words per doc by tf-idf
     for key_value_pair in sorted(tf_idfs[doc].items(),
@@ -133,6 +192,9 @@ for doc in tf_idfs:
         tf_idf = key_value_pair[1]
         
         top_tfidf_words.add(word)
+
+        print(str(word) + ":\t" + str(tf_idf))
+
     
 top_tfidf_words = list(top_tfidf_words)
 
@@ -170,23 +232,6 @@ for doc1 in vectors:
         j += 1
     i += 1
 
-fakename = defaultdict(str)
-
-fakename_file = os.path.join(project_dir, 'utilities/fakenames.txt')
-try:
-    f = open(fakename_file, 'r')
-except:
-    print("Could not find fakenames.txt in the utilities directory of your project path.")
-    exit(0)
-
-try:
-    for line in f:
-        tokens = line.split()
-        fakename[tokens[0]] = tokens[1]
-except:
-    print("The file utilities/fakenames.txt is improperly formatted.")
-    exit(0)
-
 doc_indices = list(vectors.keys())
 similarities = defaultdict(float)
 
@@ -199,10 +244,69 @@ for i in range(len(matrix)):
         similarities[doc_pair] = matrix[i][j]
 
 # print top ten similar docs
-print("***** Top ten similar documents by tfidf *****")
+print("\n***** Top ten similar users by tfidf *****")
 for key_value_pair in sorted(similarities.items(),
            key=lambda k_v: k_v[1],
            reverse=True)[:10]:
     doc_pair = key_value_pair[0]
     cosine = key_value_pair[1]
     print("%s:\t\t%s" % (doc_pair, cosine))
+
+# do SVD to reduce the tf_idfs matrix to two dimensions
+LA = np.linalg
+
+matrix = np.array(list(vectors.values()))
+U, s, Vh = LA.svd(matrix, full_matrices=False)
+assert np.allclose(matrix, np.dot(U, np.dot(np.diag(s), Vh)))
+
+# reduce to 2 dims
+s[2:] = 0
+
+# get the dimension-reduced new matrix
+new_matrix = np.dot(U, np.diag(s)).tolist()
+
+# remove all but the first 2 indices (the rest are 0's)
+for m in new_matrix:
+    del m[2:]
+
+# get a nice dictionary output
+coordinates = dict(zip(vectors.keys(), new_matrix))
+
+x_coords = [el[0] for el in new_matrix]
+y_coords = [el[1] for el in new_matrix]
+#labels = [id_to_name[idnum] for idnum in coordinates.keys()]
+labels = [i for i in range(len(x_coords))]
+print(x_coords)
+print(y_coords)
+print(labels)
+
+
+#plt.scatter(x_coords, y_coords)
+#for i, txt in enumerate(labels):
+#    plt.annotate(txt, (x_coords[i], y_coords[i]))
+
+#plt.xlim((-0.00025,0.00025))
+#plt.ylim((-0.002,0.001))
+
+#plt.savefig('clustering_full.png')
+
+#remove outliers round 1
+outliers = [19, 24]
+outliers.reverse()
+for i in outliers:
+    del x_coords[i]
+    del y_coords[i]
+    del labels[i]
+
+plt.scatter(x_coords, y_coords)
+for i, txt in enumerate(labels):
+    plt.annotate(txt, (x_coords[i], y_coords[i]))
+
+plt.xlim((-0.004,0.002))
+plt.ylim((-0.005,0.001))
+
+plt.savefig('clustering_no_19_24.png')
+
+#TODO:
+# histogram/scatter of number of messages per user
+# 
