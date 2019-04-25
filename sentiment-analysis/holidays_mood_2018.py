@@ -51,7 +51,7 @@ try:
 except:
     print("The file utilities/fakenames.txt is improperly formatted.")
     exit(0)
- 
+
 # last UTC message day time in UTC Epoch = 1555214400
 last_day = 1555214400
 day_length = 86400
@@ -60,8 +60,8 @@ day_length = 86400
 def sentiment_for_day(day):
 	
 	# start time and end time for each day
-	start_time = day - 86400
-	end_time = day
+	start_time = day
+	end_time = day + 86400
 	
 	# count num of messages
 	message_counter = 0
@@ -113,63 +113,53 @@ def sentiment_for_day(day):
 		
 	
 	return VADER_scores, TextBlob_scores
-	 
-# run sentiment on each day
-start_date = datetime(2015, 8, 16, 4, 0)
-stop_date = datetime(2019, 4, 14, 4, 0)
-# 14 is end
+
 VADER_list = []
 TextBlob_list = []
-date_list = []
 
-# get data for each day
-while start_date <= stop_date:
-	timestamp = start_date.replace(tzinfo=timezone.utc).timestamp()
+# set time period to run sentiment on
+# a = new years, b = independence day, c = thanksgiving, d = christmas
+a1 = datetime(2017, 12, 31, 4, 0)
+a2 = datetime(2018, 1, 1, 4, 0)
+a3 = datetime(2018, 1, 2, 4, 0)
+b1 = datetime(2018, 7, 3, 4, 0)
+b2 = datetime(2018, 7, 4, 4, 0)
+b3 = datetime(2018, 7, 5, 4, 0)
+c1 = datetime(2018, 11, 21, 4, 0)
+c2 = datetime(2018, 11, 22, 4,  0)
+c3 = datetime(2018, 11, 23, 4, 0)
+d1= datetime(2018, 12, 24, 4, 0)
+d2 = datetime(2018, 12, 25, 4, 0)
+d3 = datetime(2018, 12, 26, 4, 0)
+
+datelist = [a1,a2,a3,b1,b2,b3,c1,c2,c3,d1,d2,d3]
+
+# run sentiment on specified period
+for date in datelist:
+	timestamp = date.replace(tzinfo=timezone.utc).timestamp()
 	a,b = sentiment_for_day(timestamp)
-	real_date = start_date - timedelta(days=1)
-	date_list.append(real_date.date())
-# 	VADER_list.append(np.mean(a))
-# 	TextBlob_list.append(np.mean(b))
-	VADER_list.append(np.sum(a))
-	TextBlob_list.append(np.sum(b))
-	start_date+= timedelta(days=1)
-
-# run Fourier transform and convert to Power Spectral Density graph to look for cycles
-frate = 365
-Pfft = np.fft.fft(VADER_list)
-print(np.abs(Pfft))
-Pfft[0] = 0  
-freqs = np.fft.fftfreq(len(Pfft), 1. / frate)
-abs = np.abs(Pfft)
-abs_squared = abs**2
+	VADER_list.append(np.mean(a))
+	TextBlob_list.append(np.mean(b))
+	
+date_list = []
+day = 1
+for date in datelist:
+	date_list.append(day)
+	day+=1
+# plot data
 fig = plt.figure()
 ax1 = fig.add_subplot(111)
-ax1.plot(freqs, abs_squared)
-ax1.set_xlim(0)
+print(VADER_list)
+ax1.plot(date_list, VADER_list, label='NLTK VADER')
+ax1.plot(date_list, TextBlob_list, label='TextBlob')
+ax1.set_xticklabels(date_list)
+plt.xticks(date_list)
+plt.xticks(rotation=90)
+plt.title('Spyral Mood (Average Daily Score) On Four Holidays (Year 2018)')
+#plt.xlabel('Date')
+plt.ylabel('Positivity Number')
+plt.legend(loc='upper center')
+plt.tight_layout()
 plt.show()
 
-# running inverse Fourier transform
 
-# combined = [list(a) for a in zip(freqs, Pfft)]	
-# save_list = [0, 0.33302919708029194, 0.6660583941605839, 1.3321167883211678, 1.6651459854014596, 3.9963503649635035,
-# 52.285583941605836, 99.242700729927, 104.23813868613138]
-# for comb in combined:
-# 	if comb[0] not in save_list:
-# 		comb[1] = 0
-# 			
-# Pfft = [x[1] for x in combined]
-# inverse_pfft = np.fft.ifft(Pfft)
-# print(inverse_pfft)
-# 
-# fig = plt.figure()
-# ax1 = fig.add_subplot(111)
-# ax1.plot(date_list, inverse_pfft)
-# ax1.set_xticklabels(date_list)
-# plt.xticks(date_list)
-# plt.xticks(rotation=90)
-# plt.title('IFFT Spyral Mood 3 years')
-# plt.xlabel('Date')
-# plt.ylabel('Positivity Number')
-# plt.legend(loc='upper center')
-# plt.tight_layout()
-# plt.show()

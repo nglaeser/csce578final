@@ -1,17 +1,28 @@
 #Copyright (c) 2019 Nicolas Quan
 
 import os
+import re
 from collections import defaultdict
+from operator import itemgetter
 from gensim import corpora, matutils
 from gensim.models import LsiModel, TfidfModel
 from nltk.tokenize import RegexpTokenizer
 from gensim.models.coherencemodel import CoherenceModel
 from sklearn.cluster import KMeans
 import json
+from pprint import pprint
 from datetime import datetime, timezone, timedelta
+import math
+from collections import defaultdict
+import numpy as np
+from math import sqrt
 
 # list of punc to exclude from analysis
 end_punc = ['.', '!','?']
+
+# create nickname set
+nicknames = set(['Also', 'When', 'Can', 'Vu', 'Liz' ,'CDC', 'The', 'We', 'It',
+ 'If', 'That', 'This', 'You', 'Oh', 'Like', 'What', 'Let', 'Are'])
 
 try:
     project_dir = os.environ['PROJECT_PATH']
@@ -63,7 +74,7 @@ def get_data(day):
 	# start time and end time for each day
 	start_time = day - 86400
 	end_time = day
-	print(end_time)
+	#print(end_time)
 	# count num of messages
 	message_counter = 0
 	# create id to name dict     
@@ -91,8 +102,16 @@ def get_data(day):
    				id_to_name[user_id] = item['name']
    			
    			sentences.append(str(item['text']))
+   			
+   			# add nickname to set if not in already
+   			nickname = item['name']
+   			nickname_split = nickname.split(' ')
+   			for nick in nickname_split:
+   				if len(nick) >= 4:
+   					nicknames.add(nick)
+
    			message_counter+=1
-   			#print("%s: %s" % (fakename[item['user_id']], item['text']))	
+   			#print("%s: %s" % (fake_name[item['user_id']], item['text']))	
 	sentences = ''.join(sentences)
 	return sentences
 	
@@ -110,58 +129,71 @@ def preprocess(docs):
 # method to create corpus to be used for lsi
 def create_corpus(final_docs):
 	# create term dictionary
-	dictionary = corpora.Dictionary(final_docs)
+	dict = corpora.Dictionary(final_docs)
 	# create doc-term matrix using term dictionary
 	doc_term_matrix = []
 	for doc in final_docs:
-		doc_term_matrix.append(dictionary.doc2bow(doc))
+		doc_term_matrix.append(dict.doc2bow(doc))
 	# convert doc_term matrix to tfidf
 	tfidf = TfidfModel(doc_term_matrix)
 	tfidf_doc_term_matrix = tfidf[doc_term_matrix]
-	return dictionary, tfidf_doc_term_matrix
+	return dict, tfidf_doc_term_matrix
 
 # method to create lsi models and find most coherent number of topics
-def get_coherence_values(dictionary, doc_term_matrix, final_docs, stop, start, step):
+def get_coherence_values(dict, doc_term_matrix, final_docs, stop, start, step):
 	lsi_models = []
 	coherence_values = []
 	for num_topics in range(start, stop, step):
 		# create lsi models
-		lsi_model = LsiModel(doc_term_matrix, num_topics=num_topics, id2word=dictionary)
+		lsi_model = LsiModel(doc_term_matrix, num_topics=num_topics, id2word=dict)
 		lsi_models.append(lsi_model)
 		# get coherence values for each model
-		coherence_model = CoherenceModel(model=lsi_model, texts=final_docs, dictionary=dictionary, coherence='c_v')
+		coherence_model = CoherenceModel(model=lsi_model, texts=final_docs, dictionary=dict, coherence='c_v')
 		coherence_values.append(coherence_model.get_coherence())
 	print("Coherence values", coherence_values)
 	return lsi_models, coherence_values
     
 # set time period to run on
-start_date = datetime(2019, 3, 14, 4, 0)
-stop_date = datetime(2019, 4, 14, 4, 0)
+# start_date = datetime(2015, 8, 16, 4, 0)
+# stop_date = datetime(2019, 4, 14, 4, 0)
 
-# create lists to hold data
-date_list = []
-raw_docs = []
+def run_on_time_period(start, stop):
+	# create lists to hold data
+	start_date = start
+	stop_date = stop
+	date_list = []
+	raw_docs = []
 
-# run the above definitions
-while start_date <= stop_date:
-	timestamp = start_date.replace(tzinfo=timezone.utc).timestamp()
-	doc = get_data(timestamp)
-	raw_docs.append(doc)
-	real_date = start_date - timedelta(days=1)
-	date_list.append(real_date.date())
-	start_date+= timedelta(days=1)
+	# run the data getter
+	while start_date <= stop_date:
+		timestamp = start_date.replace(tzinfo=timezone.utc).timestamp()
+		doc = get_data(timestamp)
+		raw_docs.append(doc)
+		real_date = start_date - timedelta(days=1)
+		date_list.append(real_date.date())
+		start_date+= timedelta(days=1)
 
-final_docs = preprocess(raw_docs)
-print(final_docs)
-dictionary, doc_term_matrix = create_corpus(final_docs)
-lsi_models, coherence_values = get_coherence_values(dictionary, doc_term_matrix, final_docs, 10, 1, 2)
-counter = 1
-for model in lsi_models:
-	print('model: ', counter)
-	print(model.print_topics(num_topics=counter, num_words=5))
-	counter+=2
+	# make list of docs without name
 
-# get k means clusters
-# doc_term_matrix = matutils.corpus2csc(doc_term_matrix).transpose()
-# kmeans = KMeans(n_clusters=9)
-# print('K-means clusters:', kmeans.fit_predict(doc_term_matrix))
+	for i in range(len(raw_docs)):
+		for name in nicknames:
+			if name in raw_docs[i]:
+				raw_docs[i] = raw_docs[i].replace(name, '')
+			
+	final_docs = preprocess(raw_docs)
+	dict, doc_term_matrix = create_corpus(final_docs)
+	# lsi_models, coherence_values = get_coherence_values(dict, doc_term_matrix, final_docs, 10, 1, 2)
+	lsi_model = LsiModel(doc_term_matrix, num_topics=10, id2word=dict)
+	counter = 1
+	print(lsi_model.print_topics(num_topics=5, num_words=5))
+
+# find topics for each month
+cc = 1
+while cc < 13:
+	print('Month: '+str(cc))
+	start_date = datetime(2018, cc, 1, 4, 0)
+	stop_date = datetime(2018, cc, 28, 4, 0)
+	run_on_time_period(start_date, stop_date)
+	cc+=1
+
+

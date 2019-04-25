@@ -1,0 +1,1 @@
+1. Running topic-modeling.py gives, for every month, 5 topics with 5 descriptor words for each week from 1/1/2018 to 12/28/2018. Only 28 days were used for each month naively to not have to worry about varrying days of the month
