@@ -180,7 +180,7 @@ top_tfidf_words = set()
 print("\n***** top 10 tfidfs by user *****")
 for doc in tf_idfs:
 
-    print("\n" + str(id_to_name[doc]))
+    print("\n" + str(fakename[doc]))
     print("---------------------")
 
     # top ten words per doc by tf-idf
@@ -193,7 +193,7 @@ for doc in tf_idfs:
         
         top_tfidf_words.add(word)
 
-        print(str(word) + ":\t" + str(tf_idf))
+        print("{} & {:.5f} \\\\ ".format(str(word), tf_idf))
 
     
 top_tfidf_words = list(top_tfidf_words)
@@ -235,6 +235,10 @@ for doc1 in vectors:
 doc_indices = list(vectors.keys())
 similarities = defaultdict(float)
 
+# key for plots
+#for i, idnum in enumerate(vectors.keys()):
+#    print(str(i) + " & " + str(fakename[idnum]) + " \\\\ ")
+
 # only traverse half the matrix (since it's symmetric)
 for i in range(len(matrix)):
     for j in range(i, len(matrix)):
@@ -250,7 +254,7 @@ for key_value_pair in sorted(similarities.items(),
            reverse=True)[:10]:
     doc_pair = key_value_pair[0]
     cosine = key_value_pair[1]
-    print("%s:\t\t%s" % (doc_pair, cosine))
+    print("%s & %s \\\\ " % (doc_pair, cosine))
 
 # do SVD to reduce the tf_idfs matrix to two dimensions
 LA = np.linalg
@@ -276,9 +280,6 @@ x_coords = [el[0] for el in new_matrix]
 y_coords = [el[1] for el in new_matrix]
 #labels = [id_to_name[idnum] for idnum in coordinates.keys()]
 labels = [i for i in range(len(x_coords))]
-print(x_coords)
-print(y_coords)
-print(labels)
 
 
 #plt.scatter(x_coords, y_coords)
@@ -291,22 +292,18 @@ print(labels)
 #plt.savefig('clustering_full.png')
 
 #remove outliers round 1
-outliers = [19, 24]
-outliers.reverse()
-for i in outliers:
-    del x_coords[i]
-    del y_coords[i]
-    del labels[i]
+#outliers = [19, 24]
+#outliers.reverse()
+#for i in outliers:
+#    del x_coords[i]
+#    del y_coords[i]
+#    del labels[i]
 
-plt.scatter(x_coords, y_coords)
-for i, txt in enumerate(labels):
-    plt.annotate(txt, (x_coords[i], y_coords[i]))
+#plt.scatter(x_coords, y_coords)
+#for i, txt in enumerate(labels):
+#    plt.annotate(txt, (x_coords[i], y_coords[i]))
 
-plt.xlim((-0.004,0.002))
-plt.ylim((-0.005,0.001))
+#plt.xlim((-0.004,0.002))
+#plt.ylim((-0.005,0.001))
 
-plt.savefig('clustering_no_19_24.png')
-
-#TODO:
-# histogram/scatter of number of messages per user
-# 
+#plt.savefig('clustering_no_19_24.png')
