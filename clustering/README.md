@@ -4,7 +4,7 @@
 python Glaeser_assignment02.py
 ```
 
-## Improvements to be made
+## Improvements made
 
 * Dealing with 
     * misspelled words
@@ -12,4 +12,4 @@ python Glaeser_assignment02.py
     * emojis
 * Using an updated stopword list
     * Include things like "lol", "yeah", "like"...
-* Create a visual representation of the results (reduce to two dimensions and create a graph)
+* Creating a visual representation of the results (reduce to two dimensions and create a graph)
