@@ -19,6 +19,7 @@ utilities/old
 temp-transcript-*.json
 transcript-*.json
 sentence-complexity/sentences
+clustering/plotkey.txt
 
 # images
 *.png
