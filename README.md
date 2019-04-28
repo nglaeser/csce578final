@@ -2,6 +2,8 @@
 
 *Note: A reference for dealing with JSON transcripts can be found in [this code](clustering/Glaeser_assignment02.py).*
 
+This project runs several types of text analysis on the corpus of messages from a GroupMe chat.
+
 ## Quick Links
 
 * [Project Proposal](https://www.overleaf.com/read/nmbpfkzvzjgj); also [in this repo](Glaeser,Quan_Proposal.pdf)
@@ -31,12 +33,16 @@ export PROJECT_PATH="[path to this repo]"
 
 *Python 3.7*
 
+Cluster users by the content of their messages.
+
 * [Write-up explaining original code](https://www.overleaf.com/read/cwzdnysgycvf)
 * Python code
 
 ## Sentence Complexity
 
 *Python 3.7*
+
+Determine the sentence complexity of each user's messages.
 
 * [Write-up explaining original code](https://www.overleaf.com/read/zczwcrsfwjqk)
 * `Glaeser_assignment03.ipynb` and `Glaeser_assignment03.py`: full code
@@ -50,6 +56,10 @@ There are also files containing submodules of the full code:
 
 *Python 3.7*
 
+Analyze the mood of the messages in the chat over time.
+
 ## Topic Modelling
 
 *Python 3.7*
+
+Obtain topics that describe the content of the chat in a certain time frame.
