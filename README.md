@@ -1,5 +1,7 @@
 # CSCE 578 Final Project
 
+*Note 2: This repo has been archived.*
+
 *Note: A reference for dealing with JSON transcripts can be found in [this code](clustering/Glaeser_assignment02.py).*
 
 This project runs several types of text analysis on the corpus of messages from a GroupMe chat.
